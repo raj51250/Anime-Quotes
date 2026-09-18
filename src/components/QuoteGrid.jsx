@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import QuoteCard from "./QuoteCard.jsx";
 import Loader from "./Loader.jsx";
 import EmptyState from "./EmptyState.jsx";
@@ -14,8 +14,37 @@ export default function QuoteGrid({
   favorites,
   onToggleFavorite,
   emptyState,
+  coverArtByAnime,
 }) {
   const favoriteIds = new Set(favorites.map((f) => quoteId(f)));
+  const sentinelRef = useRef(null);
+
+  // Keep the latest values in refs so the observer (created once) always
+  // acts on current state without needing to be torn down and rebuilt
+  // every time the quote list grows — rebuilding it on every append is
+  // what causes runaway "load more" loops, since a freshly (re)observed
+  // target fires its callback immediately with the current intersection
+  // state even when nothing actually changed.
+  const stateRef = useRef({ loadingMore, canLoadMore, onLoadMore });
+  stateRef.current = { loadingMore, canLoadMore, onLoadMore };
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const { loadingMore, canLoadMore, onLoadMore } = stateRef.current;
+        if (entries[0].isIntersecting && canLoadMore && !loadingMore) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: "600px 0px 600px 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   if (loading) return <Loader />;
 
@@ -41,23 +70,21 @@ export default function QuoteGrid({
             index={i}
             isFavorite={favoriteIds.has(quoteId(quote))}
             onToggleFavorite={onToggleFavorite}
+            coverArt={coverArtByAnime?.[quote.anime?.name]}
           />
         ))}
       </div>
 
-      {canLoadMore && (
-        <div className="mt-10 flex justify-center">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.96 }}
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="border-2 border-ink bg-paper px-6 py-2.5 font-display tracking-wide text-ink transition-colors hover:bg-ink hover:text-paper disabled:opacity-60"
-          >
-            {loadingMore ? "LOADING…" : "LOAD MORE"}
-          </motion.button>
-        </div>
-      )}
+      {/* Sentinel that triggers the next page as it scrolls into view.
+          Always mounted (even when canLoadMore is false) so the observer
+          set up above doesn't need to be recreated when it flips true. */}
+      <div ref={sentinelRef} className="mt-10 flex justify-center py-4">
+        {canLoadMore && loadingMore && (
+          <span className="font-display text-sm tracking-wide text-sumi">
+            LOADING MORE…
+          </span>
+        )}
+      </div>
     </div>
   );
 }

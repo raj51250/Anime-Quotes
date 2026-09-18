@@ -12,14 +12,23 @@ export default function Footer() {
         </div>
 
         <p className="text-sm text-paper/70">
-          Quotes served by the free{" "}
+          Quotes by{" "}
           <a
             href="https://animechan.io"
             target="_blank"
             rel="noreferrer"
             className="underline decoration-crimson underline-offset-2 hover:text-crimson"
           >
-            Animechan API
+            Animechan
+          </a>
+          , cover art by{" "}
+          <a
+            href="https://jikan.moe"
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-crimson underline-offset-2 hover:text-crimson"
+          >
+            Jikan
           </a>
           .
         </p>
@@ -28,7 +37,7 @@ export default function Footer() {
           Made with <FiHeart className="text-crimson" fill="currentColor" size={13} />
           by
           <a
-            href="https://github.com/"
+            href="https://github.com/raj51250"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 font-display tracking-wide text-paper hover:text-crimson"

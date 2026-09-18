@@ -5,22 +5,31 @@ import { FiHeart } from "react-icons/fi";
 import Navbar from "./components/Navbar.jsx";
 import Hero from "./components/Hero.jsx";
 import QuoteGrid from "./components/QuoteGrid.jsx";
+import TrendingGrid from "./components/TrendingGrid.jsx";
 import Footer from "./components/Footer.jsx";
 import ScrollTopButton from "./components/ScrollTopButton.jsx";
 import EmptyState from "./components/EmptyState.jsx";
+import PwaUpdater from "./components/PwaUpdater.jsx";
+import InstallPrompt from "./components/InstallPrompt.jsx";
 
 import {
   getRandomQuote,
   getRandomQuotes,
   getQuotesByAnime,
 } from "./api/animechan.js";
+import {
+  isTrendingEnabled,
+  getTrendingQuotes,
+  bumpFavoriteCount,
+} from "./api/trending.js";
 import { FALLBACK_QUOTES } from "./data/fallbackQuotes.js";
 import { useFavorites } from "./hooks/useFavorites.js";
+import { useCoverArt } from "./hooks/useCoverArt.js";
 
 const PAGE_SIZE = 9;
 
 export default function App() {
-  const [view, setView] = useState("home"); // "home" | "favorites"
+  const [view, setView] = useState("home"); // "home" | "favorites" | "trending"
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
 
   const [featured, setFeatured] = useState(null);
@@ -36,8 +45,25 @@ export default function App() {
   const [searchPage, setSearchPage] = useState(1);
   const [searchHasMore, setSearchHasMore] = useState(true);
 
+  const [trendingQuotes, setTrendingQuotes] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(false);
+  const trendingFetched = useRef(false);
+
   const fallbackCursor = useRef(0);
   const seenContent = useRef(new Set());
+
+  // Cover art is resolved for whatever's currently on screen, across all
+  // three views, and merged into one lookup table by anime name.
+  const homeCoverArt = useCoverArt(quotes);
+  const favoritesCoverArt = useCoverArt(favorites);
+  const trendingCoverArt = useCoverArt(trendingQuotes);
+  const featuredCoverArt = useCoverArt(featured ? [featured] : []);
+  const coverArtByAnime = {
+    ...homeCoverArt,
+    ...favoritesCoverArt,
+    ...trendingCoverArt,
+    ...featuredCoverArt,
+  };
 
   const nextFallbackBatch = useCallback((n) => {
     const batch = [];
@@ -52,6 +78,7 @@ export default function App() {
     const wasFavorite = isFavorite(quote);
     toggleFavorite(quote);
     toast.success(wasFavorite ? "Removed from favorites" : "Added to favorites");
+    bumpFavoriteCount(quote, wasFavorite ? -1 : 1);
   };
 
   const refreshFeatured = useCallback(async () => {
@@ -101,6 +128,17 @@ export default function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch trending lazily, the first time that tab is opened.
+  useEffect(() => {
+    if (view !== "trending" || trendingFetched.current || !isTrendingEnabled) return;
+    trendingFetched.current = true;
+    setTrendingLoading(true);
+    getTrendingQuotes()
+      .then(setTrendingQuotes)
+      .catch(() => toast.error("Couldn't load trending quotes right now."))
+      .finally(() => setTrendingLoading(false));
+  }, [view]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
@@ -175,6 +213,9 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <PwaUpdater />
+      <InstallPrompt />
+
       <Toaster
         position="bottom-center"
         toastOptions={{
@@ -200,6 +241,7 @@ export default function App() {
       {view === "home" && (
         <Hero
           featured={featured}
+          coverArt={featured ? coverArtByAnime[featured.anime?.name] : null}
           onShuffle={refreshFeatured}
           shuffling={shuffling}
           searchProps={{
@@ -230,6 +272,7 @@ export default function App() {
               canLoadMore={false}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              coverArtByAnime={coverArtByAnime}
               emptyState={
                 <EmptyState
                   icon={FiHeart}
@@ -237,6 +280,29 @@ export default function App() {
                   message="Tap the heart on any quote card to pin it here."
                 />
               }
+            />
+          </>
+        )}
+
+        {view === "trending" && (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="font-display text-3xl tracking-wide text-ink">
+                MOST LOVED
+              </h2>
+              {isTrendingEnabled && (
+                <span className="border-2 border-teal bg-teal/10 px-2.5 py-1 text-xs font-semibold text-teal">
+                  live across all visitors
+                </span>
+              )}
+            </div>
+            <TrendingGrid
+              enabled={isTrendingEnabled}
+              quotes={trendingQuotes}
+              loading={trendingLoading}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+              coverArtByAnime={coverArtByAnime}
             />
           </>
         )}
@@ -266,6 +332,7 @@ export default function App() {
               canLoadMore={isSearchMode ? searchHasMore : true}
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              coverArtByAnime={coverArtByAnime}
             />
           </>
         )}

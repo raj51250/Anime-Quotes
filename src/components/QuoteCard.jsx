@@ -4,6 +4,7 @@ import { PiFilmSlateFill } from "react-icons/pi";
 import toast from "react-hot-toast";
 
 const ROTATIONS = ["-rotate-1", "rotate-0", "rotate-1", "-rotate-[0.5deg]", "rotate-[0.5deg]"];
+const PHOTO_ROTATIONS = ["rotate-3", "-rotate-2", "rotate-2"];
 
 function initials(name = "") {
   return name
@@ -15,8 +16,9 @@ function initials(name = "") {
     .toUpperCase();
 }
 
-export default function QuoteCard({ quote, index = 0, isFavorite, onToggleFavorite }) {
+export default function QuoteCard({ quote, index = 0, isFavorite, onToggleFavorite, coverArt }) {
   const rotation = ROTATIONS[index % ROTATIONS.length];
+  const photoRotation = PHOTO_ROTATIONS[index % PHOTO_ROTATIONS.length];
   const anime = quote.anime?.name ?? "Unknown series";
   const character = quote.character?.name ?? "Unknown character";
 
@@ -41,6 +43,21 @@ export default function QuoteCard({ quote, index = 0, isFavorite, onToggleFavori
     >
       {/* corner tape */}
       <span className="absolute -top-2 left-6 h-4 w-10 -rotate-3 bg-gold/80 border border-ink/40" />
+
+      {/* pinned anime-cover polaroid, when we have one */}
+      {coverArt && (
+        <div
+          className={`absolute -top-4 -right-3 h-16 w-14 shrink-0 border-2 border-ink bg-paper p-1 pb-2 shadow-md ${photoRotation}`}
+        >
+          <img
+            src={coverArt}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
 
       <div>
         <span

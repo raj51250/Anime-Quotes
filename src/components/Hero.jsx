@@ -3,7 +3,7 @@ import { FiShuffle } from "react-icons/fi";
 import { PiFilmSlateFill } from "react-icons/pi";
 import SearchBar from "./SearchBar.jsx";
 
-export default function Hero({ featured, onShuffle, shuffling, searchProps }) {
+export default function Hero({ featured, coverArt, onShuffle, shuffling, searchProps }) {
   return (
     <section className="relative overflow-hidden border-b-[3px] border-ink">
       <div className="halftone absolute inset-0 opacity-[0.06]" aria-hidden />
@@ -72,6 +72,14 @@ export default function Hero({ featured, onShuffle, shuffling, searchProps }) {
                     {featured?.anime?.name ?? "Loading…"}
                   </p>
                 </div>
+                {coverArt && (
+                  <img
+                    src={coverArt}
+                    alt=""
+                    aria-hidden
+                    className="h-12 w-10 shrink-0 border-2 border-ink object-cover"
+                  />
+                )}
               </div>
             </div>
 

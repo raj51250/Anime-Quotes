@@ -1,4 +1,4 @@
-import { FiHeart, FiGithub } from "react-icons/fi";
+import { FiHeart, FiGithub, FiTrendingUp } from "react-icons/fi";
 
 export default function Navbar({ view, onChangeView, favoritesCount }) {
   return (
@@ -17,7 +17,7 @@ export default function Navbar({ view, onChangeView, favoritesCount }) {
           </span>
         </button>
 
-        <nav className="flex items-center gap-2 sm:gap-3">
+        <nav className="flex items-center gap-1.5 sm:gap-3">
           <button
             type="button"
             onClick={() => onChangeView("home")}
@@ -28,6 +28,20 @@ export default function Navbar({ view, onChangeView, favoritesCount }) {
             }`}
           >
             Browse
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChangeView("trending")}
+            aria-label="View trending quotes"
+            className={`flex items-center gap-1.5 border-2 border-ink px-3 py-1.5 text-sm font-semibold transition-colors ${
+              view === "trending"
+                ? "bg-teal text-paper"
+                : "bg-paper text-ink hover:bg-paper-dim"
+            }`}
+          >
+            <FiTrendingUp size={15} />
+            <span className="hidden sm:inline">Trending</span>
           </button>
 
           <button
@@ -53,11 +67,11 @@ export default function Navbar({ view, onChangeView, favoritesCount }) {
           </button>
 
           <a
-            href="https://github.com/"
+            href="https://github.com/raj51250"
             target="_blank"
             rel="noreferrer"
             aria-label="View source on GitHub"
-            className="flex h-9 w-9 items-center justify-center border-2 border-ink bg-paper text-ink transition-colors hover:bg-ink hover:text-paper"
+            className="hidden h-9 w-9 items-center justify-center border-2 border-ink bg-paper text-ink transition-colors hover:bg-ink hover:text-paper sm:flex"
           >
             <FiGithub size={16} />
           </a>
